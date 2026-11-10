@@ -2,7 +2,7 @@
 
 - **Source:** `install.ps1`
 - **Requirements:** Windows 10+, PowerShell 5.1, and the C# compiler that ships with Windows
-- **Description:** Downloads the tool sources, compiles the tools you pick on your own machine, and installs them next to where you ran it.
+- **Description:** Downloads the tool sources, compiles the tools you pick on your own machine, and installs them into a `tinyscripts.CLI` folder.
 
 ---
 
@@ -23,7 +23,7 @@ Available tools:
   5. nodup
   6. reindex
 
-Enter the numbers to install, one after another (24 installs 2 and 4).
+Enter the numbers to install, one after another.
 Enter 0 to install everything.
 
 Selection: 24
@@ -34,7 +34,16 @@ Selection: 24
 - `2,4` and `2 4` work the same way.
 - Entering nothing installs nothing.
 
-The compiled executables land in `bin/` in the directory you ran the installer from, and the config files land in `conf/` next to it. The installer prints the `setx PATH` line to add - run it, then open a new terminal.
+Everything lands in a `tinyscripts.CLI` folder in the directory you ran the installer from:
+
+```
+tinyscripts.CLI/
+├── bin/        the compiled executables
+├── conf/       the config files
+└── .state/     per tool source hashes
+```
+
+The installer prints the `setx PATH` line to add. Run it, then open a new terminal.
 
 ---
 
@@ -52,17 +61,21 @@ Every `.cs` file and every folder containing `.cs` files inside `src/` becomes a
 
 Each tool is compiled with the C# compiler that ships with Windows, found at `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe` (or the 32-bit path). No Visual Studio, NuGet, or dotnet CLI is involved.
 
+The current tool is shown on one line that is rewritten in place, so a long install stays readable.
+
 A tool that fails to compile is reported and skipped. The remaining tools still install.
 
 #### Updates
 
 Each tool's sources are hashed and the hash is stored in `.state/<tool>.hash`. Running the installer again compares the stored hash with the current sources and rebuilds only the tools that changed. Tools whose sources are unchanged are left alone.
 
-This means a bugfix in one tool does not force a rebuild of the others.
+A bugfix in one tool does not force a rebuild of the others.
 
 #### Config files
 
 Config files are copied into `conf/` only when they are not already there, so your edits are never overwritten. Delete a file to get the current version back on the next run.
+
+The tools read their config from `../conf/` relative to the executable, which is why `bin/` and `conf/` sit next to each other inside the folder.
 
 ---
 
@@ -81,7 +94,7 @@ Running the script as a file gives you a few switches:
 |---|---|
 | `-All` | install every tool without prompting |
 | `-Force` | recompile even when the sources have not changed |
-| `-InstallDir` | install somewhere other than the current directory |
+| `-InstallDir` | put the `tinyscripts.CLI` folder somewhere other than the current directory |
 | `-SourceDir` | compile from a local checkout instead of downloading |
 
 ---
@@ -89,5 +102,5 @@ Running the script as a file gives you a few switches:
 ### Notes
 
 - **Execution policy.** The one-liner pipes the script into `iex`, so it runs even when the policy blocks running script files. If you download the script and run it as a file, you may need `Set-ExecutionPolicy -Scope Process Bypass` or to run it with `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
-- **Nothing is installed system wide.** The tools go into `bin/` in the directory you ran the installer from, and PATH is left for you to set.
+- **Nothing is installed system wide.** The tools go into the `tinyscripts.CLI` folder, and PATH is left for you to set.
 - **Only the compiler is needed.** It is part of Windows, so there is no runtime or dependency to install first.

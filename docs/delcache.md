@@ -23,42 +23,46 @@ delcache [path]
 
 #### Discovery
 
-Reads target directory names from `conf/.cdirs` (one per line, `#` comments ignored). For each target it calls `Directory.EnumerateDirectories(root, target, SearchOption.AllDirectories)` to find every matching subdirectory at any depth.
+Reads target directory names from `conf/.cdirs`, one per line. `#` starts a comment, empty lines are ignored. Each entry is a search pattern, so `node_modules` matches that name and `*.tmp` matches any name ending in `.tmp`.
+
+For each target it calls `Directory.EnumerateDirectories(root, target, SearchOption.AllDirectories)` to find every matching subdirectory at any depth.
+
+The search descends into junctions and symlinks, so a directory reachable through a link is found and listed twice if it also exists on its own. A matched directory that is itself a link is skipped and reported as `SKIP (symlink/junction)`, and it is never deleted.
 
 #### Confirmation
 
-Prints the full path of every match, numbered, then prompts [y/N] - only proceeds on explicit `y` or `yes`.
+Prints the full path of every match, then prompts `[y/N]`. Only `y` or `yes` proceeds, everything else cancels.
 
 #### Deletion
 
-Iterates the list and deletes each directory with `Directory.Delete(path, true)`. Reports success count and prints failures to stderr.
+Iterates the list and deletes each directory with `Directory.Delete(path, true)`. Reports the success count and prints failures to stderr.
 
 #### Error handling
 
-- Directories that can't be read during search (permission denied) are silently skipped.
+- A directory that cannot be read during the search is reported once and the scan continues.
 - Directories that fail to delete are logged to stderr with the reason; remaining deletions continue.
-- If the root path doesn't exist, prints an error and exits.
+- If the root path does not exist, prints an error and exits.
 
 ---
 
 ### Design decisions
 
-- **C# over Python (delpyc):** The original delpyc required Python 3.8+ and the `click` package. delcache is a standalone .exe with no bundled runtime - copy and run.
-- **Always prompt:** Cache directories are safe to delete in theory, but a typo in `.cdirs` or a wrong root path can delete the wrong data. Forcing Y/N confirmation on every run ensures you see exactly what will be deleted.
-- **Config file:** Adding or removing targets (node_modules, .cache, .vs) doesn't require recompilation. The config file is editable by any text editor.
+- **Always prompt:** cache directories are usually safe to delete, but a typo in `.cdirs` or a wrong root path deletes the wrong data. Forcing Y/N on every run means you see exactly what will be deleted.
+- **Config file:** adding or removing targets does not require recompilation. The config file is editable with any text editor.
+- **Patterns over plain names:** `Directory.EnumerateDirectories` takes a search pattern, so the config accepts `*.tmp` and `node_mod*` as well as exact names. A single entry can cover a whole family of directories.
 
 ---
 
 ### Source tree
 
 ```
-shared/
+cli/
 ├── src/
-│   └── delcache.cs        ← single-file source
+│   └── delcache.cs         ← single-file source
 ├── bin/
-│   └── delcache.exe       ← compiled binary
+│   └── delcache.exe        ← compiled binary
 ├── conf/
-│   └── .cdirs             ← target directory names
+│   └── .cdirs              ← target directory names
 └── docs/
     └── delcache.md
 ```
@@ -67,6 +71,6 @@ shared/
 
 ### Known limitations
 
-- No exclusions - you can't skip specific paths within a single run.
+- No exclusions - you cannot skip specific paths within a single run.
 - No parallel deletion - directories are removed sequentially.
 - Follows symlinks - `SearchOption.AllDirectories` traverses junctions and symlinks.

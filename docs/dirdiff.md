@@ -26,13 +26,13 @@ Flags may precede the two paths and also apply in interactive (picker) mode. Sup
 
 #### Input
 
-With two arguments, they're used directly as source and destination. Without arguments (Windows only), two `FolderBrowserDialog` pickers pop up sequentially.
+With two arguments, they are used directly as source and destination. Without arguments (Windows only), two `FolderBrowserDialog` pickers pop up sequentially.
 
 #### Scanning
 
-`scanner.cs` recursively walks each directory with `Directory.GetFiles`/`GetDirectories`. Each file stores its relative path, absolute path, and size. Files/dirs that can't be read are counted and reported as `unreadable` instead of silently skewing results.
+`scanner.cs` recursively walks each directory with `Directory.GetFiles`/`GetDirectories`. Each file stores its relative path, absolute path, and size. Files and directories that cannot be read are counted and reported as `unreadable` instead of silently skewing results.
 
-By default, reparse points (junctions/symlinks) are **skipped** so the scan can't escape the root, double-count files, or hang on a cycle. Pass `-l`/`--links` to follow them instead (see the warning below).
+By default, reparse points (junctions/symlinks) are **skipped** so the scan cannot escape the root, double-count files, or hang on a cycle. Pass `-l`/`--links` to follow them instead (see the warning below).
 
 ##### Following junctions/symlinks (`-l`) - warning
 
@@ -51,7 +51,7 @@ Matching is content-aware, so it correctly recognizes *renamed* files as matches
 
 1. **Names** - which dest files share a name with any source file.
 2. **Sizes (cheap pre-filter)** - which dest file sizes exist among source sizes. Only size-matched files are candidates for identical content.
-3. **SHA256 (parallel, size-matched only)** - each size-matched source and dest file is hashed (1 MB chunks, `Parallel.ForEach` with thread count from `conf/.thr`, default 8, max 32). This avoids hashing files that can't possibly match.
+3. **SHA256 (parallel, size-matched only)** - each size-matched source and dest file is hashed (1 MB chunks, `Parallel.ForEach` with thread count from `conf/.thr`, default 8, max 32). This avoids hashing files that cannot possibly match.
 4. **Hashes** - a dest file's hash matching any source hash proves identical content, regardless of filename.
 
 #### Metrics (base = source)
@@ -62,37 +62,39 @@ Matching is content-aware, so it correctly recognizes *renamed* files as matches
 | `Filenames matched` | dest files whose name also exists in source |
 | `Sizes matched` | dest files whose size exists among source sizes |
 | `Hashes matched` | dest files whose hash exists among source hashes / number of size-matched files actually hashed |
-| `Unreadable files` | dest files that couldn't be read / source files that couldn't be read (dest / source) |
+| `Unreadable files` | dest files that could not be read / source files that could not be read (dest / source) |
 | `Missing files` | source files with no hash match in dest (excludes unreadable) |
 | `Extra files` | dest files with no hash match in source (excludes unreadable) |
 
-Each percentage is computed from that row's own numerator/denominator. Rows are right-aligned with a fixed percentage column, so the `]` of every `[NN.NN%]` lines up regardless of whether the integer part is 1, 2, or 3 digits.
+Each percentage is computed from that row's own numerator and denominator. Rows are right-aligned with a fixed percentage column, so the `]` of every `[NN.NN%]` lines up regardless of whether the integer part is 1, 2, or 3 digits.
 
-`Unreadable files` counts files that exist but couldn't be hashed (locked/in-use, permission, transient IO). Unreadable files are reported here rather than as missing/extra, so a locked file is never double-counted as a real difference. The unreadable denominator can be 0, in which case the percentage shows `N/A`.
+`Unreadable files` counts files that exist but could not be hashed (locked/in-use, permission, transient IO). Unreadable files are reported here rather than as missing/extra, so a locked file is never double-counted as a real difference. The unreadable denominator can be 0, in which case the percentage shows `N/A`.
 
 #### Example output
 
 ```
-  ──────────────────────────────────────────────────
+  Source:      D:\src
+  Dest:        D:\dst
 
   Comparing directories...
 
-  Files present:           43 / 42   [102.38%]
-  Filenames matched:       00 / 42    [00.00%]
-  Sizes matched:           41 / 42    [97.62%]
-  Hashes matched:          41 / 41   [100.00%]
-  Unreadable files:          0 / 0       [N/A]
-  Missing files:                 0
-  Extra files:                   2
-
-  ──────────────────────────────────────────────────
+  Files present:             4 / 6       [66.67%]
+  Filenames matched:         3 / 6       [50.00%]
+  Sizes matched:             3 / 6       [50.00%]
+  Hashes matched:            3 / 3      [100.00%]
+  Unreadable files:          0 / 0          [N/A]
+  Missing files:                 2
+  Extra files:                   1
 
   Issue(s) found:
 
-    + 2 items extra
+    - 2 items missing
+    + 1 items extra
 ```
 
 The console report only shows *counts* of missing/extra files. For the actual filenames, enable run logging (see below).
+
+The exit code is `0` when nothing is missing, extra, or unreadable, and `1` when any of those is non-zero.
 
 ---
 
@@ -116,16 +118,16 @@ logs/dirdiff/
     └── extraFiles.txt        ← dest files with no hash match in source (one per line)
 ```
 
-The listing in `missingFiles.txt`/`extraFiles.txt` is exactly what the summary can't show: the actual file paths behind each missing/extra count. Retention prunes the `logKeep` newest folders, deleting the oldest on each run.
+The listing in `missingFiles.txt`/`extraFiles.txt` is exactly what the summary cannot show: the actual file paths behind each missing/extra count. Retention prunes the `logKeep` newest folders, deleting the oldest on each run.
 
 ---
 
 ### Design decisions
 
-- **Content-aware matching over name-only:** Renamed files share no name between trees, so a name-only diff would report them all as missing. Matching by SHA256 hash (with a size pre-filter to limit hashing) gives the real "is this actually there" answer.
-- **Size pre-filter before hashing:** Files of different sizes can't be identical content, so only size-matched candidates are hashed. This keeps large-tree comparisons fast.
-- **Unreadable files get their own bucket:** a file that can't be hashed (locked by another program, permission, transient IO) is reported in `Unreadable files` and excluded from `Missing`/`Extra`, so it's never double-counted as a real difference. This keeps `missing`/`extra` counting only verified differences.
-- **Multi-file source:** split into `program.cs` (UI/report), `scanner.cs` (walk + hash), `diff.cs` (matching), and `logcfg.cs` (config + run logging) - same pattern as `mmu/` and `etsu/`, compiled together via `src\dirdiff\*.cs`.
+- **Content-aware matching over name-only:** renamed files share no name between trees, so a name-only diff would report them all as missing. Matching by SHA256 hash (with a size pre-filter to limit hashing) gives the real "is this actually there" answer.
+- **Size pre-filter before hashing:** files of different sizes cannot be identical content, so only size-matched candidates are hashed. This keeps large-tree comparisons fast.
+- **Unreadable files get their own bucket:** a file that cannot be hashed (locked by another program, permission, transient IO) is reported in `Unreadable files` and excluded from `Missing`/`Extra`, so it is never double-counted as a real difference. This keeps `missing`/`extra` counting only verified differences.
+- **Multi-file source:** split into `program.cs` (UI/report), `scanner.cs` (walk + hash), `diff.cs` (matching), and `logcfg.cs` (config + run logging), compiled together via `src\dirdiff\*.cs`.
 - **Reparse points skipped by default:** junctions/symlinks are ignored unless `-l` is passed, because following them can escape the roots, double-count, or loop. The safe default means `missing`/`extra` reflect only the actual folder contents.
 - **Run logging on via config:** controlled by `conf/.dirdiff` (`log`, `logKeep`); a normal run stays fast and quiet, and the toggle captures the actual missing/extra filenames for audit.
 
@@ -134,7 +136,7 @@ The listing in `missingFiles.txt`/`extraFiles.txt` is exactly what the summary c
 ### Source tree
 
 ```
-shared/
+cli/
 ├── src/
 │   └── dirdiff/
 │       ├── program.cs      ← Main, UI, metric layout

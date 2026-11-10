@@ -15,8 +15,8 @@ mmu -d
 Starts an interactive download session:
 
 1. Paste a YouTube or YouTube Music link.
-2. mmu fetches the title and artist up front and prints `Downloading <title> by <artist>...` (missing artist is shown as "Unknown Artist").
-3. Filename defaults to yt-dlp's `%(title)s` template - no manual filename prompt.
+2. mmu fetches the title and artist up front and prints `Downloading <title> by <artist>...`. A missing artist is shown as "Unknown Artist".
+3. The filename defaults to yt-dlp's `%(title)s` template, so there is no manual filename prompt.
 4. On success, prints `✨ Done. Saved audio to - <outdir>\`.
 
 #### Example
@@ -37,7 +37,9 @@ C:\> mmu -d
 
 #### Dependency resolution
 
-Locates `yt-dlp.exe` via `conf/mmu/.conf` (explicit path), alongside the binary, or PATH. Locates `ffmpeg.exe` alongside the binary or in `ffmpeg/bin/`. Both accept `default` for auto-detection.
+Locates `yt-dlp.exe` via `conf/mmu/.conf` (explicit path), alongside the binary, in a `yt-dlp` subfolder, or on PATH. Locates ffmpeg alongside the binary, in an `ffmpeg/bin` subfolder, or on PATH. Both accept `default` for auto-detection.
+
+If yt-dlp is not found, the run stops with an error naming the three places it looked.
 
 #### Pre-flight fetch
 
@@ -45,7 +47,7 @@ Runs `yt-dlp --print "%(title)s" --print "%(artist)s"` on the link to get the di
 
 #### Download
 
-Runs yt-dlp with `--config-location` pointing at `conf/mmu/yt-dlp.conf` so no other yt-dlp config applies. Filename uses `%(title)s.%(ext)s`; Windows-safe names come from the config's flags. Verbose output is suppressed - the config sets quiet output so mmu prints its own progress/success lines.
+Runs yt-dlp with `--config-location` pointing at `conf/mmu/yt-dlp.conf` so no other yt-dlp config applies. The filename uses `%(title)s.%(ext)s`; Windows-safe names come from the config's flags. Verbose output is suppressed, so the config sets quiet output and mmu prints its own progress and success lines.
 
 #### Configuration
 
@@ -59,11 +61,11 @@ outdir=D:\Music
 
 | Key | Values | Description |
 |---|---|---|
-| `ytdlp` | `default` or full path | How to locate yt-dlp.exe. `default` tries alongside binary, then PATH. |
-| `ffmpeg` | `default` or full path | How to locate ffmpeg/ffprobe. `default` tries alongside binary, then PATH. Accepts an exe or a directory. |
-| `outdir` | directory path | Where downloads are saved. Defaults to current directory. |
+| `ytdlp` | `default` or full path | How to locate yt-dlp.exe. `default` tries alongside the binary, in a `yt-dlp` subfolder, then PATH. |
+| `ffmpeg` | `default` or full path | How to locate ffmpeg/ffprobe. `default` tries alongside the binary, in an `ffmpeg/bin` subfolder, then PATH. Accepts an exe or a directory. |
+| `outdir` | directory path | Where downloads are saved. Defaults to the current directory. |
 
-`conf/mmu/yt-dlp.conf` holds download flags, passed via `--config-location` so yt-dlp ignores all other config files. Good defaults: best audio only (`-f ba`), extract audio keeping original codec (`-x --audio-format best`), no playlists, Windows-safe filenames, quiet output. Both files are plain text - edit freely, no recompilation.
+`conf/mmu/yt-dlp.conf` holds the download flags, passed via `--config-location` so yt-dlp ignores all other config files. The shipped file downloads best audio only (`-f ba`), extracts audio keeping the original codec (`-x --audio-format best`), embeds metadata and the thumbnail, disables playlists, sanitizes filenames for Windows, resumes interrupted downloads, and suppresses verbose output. Both files are plain text, so edit them freely without recompiling.
 
 ---
 
@@ -87,7 +89,7 @@ outdir=D:\Music
 ### Source tree
 
 ```
-shared/
+cli/
 ├── src/
 │   └── mmu/
 │       ├── mmu.cs           ← main entry + shared helpers
@@ -106,6 +108,6 @@ shared/
 
 ### Known limitations
 
-- Requires yt-dlp.exe (not bundled - download separately).
+- Requires yt-dlp.exe (not bundled, download separately).
 - Requires ffmpeg.exe for audio extraction (not bundled).
 - Single-file downloads only (no playlists).

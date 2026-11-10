@@ -35,7 +35,7 @@ Enumerates the top level of DIR only (`Directory.GetFiles`, no recursion). Zero-
 2. Only same-size groups get a SHA256 stream hash (1 MB chunks).
 3. Files sharing size + hash form a duplicate group.
 
-A file that can't be read or hashed is reported as skipped and makes the run exit `1` - an unreadable file could be hiding a duplicate, so silence would be a lie.
+A file that cannot be read or hashed is reported as skipped and makes the run exit `1` - an unreadable file could be hiding a duplicate, so silence would be a lie.
 
 #### Keep rule
 
@@ -91,7 +91,7 @@ Real runs write `logs/nodup/<timestamp>/summary.log` (the full report), keeping 
 ### Source tree
 
 ```
-shared/
+cli/
 ├── src/
 │   └── nodup.cs           ← single-file source
 ├── bin/

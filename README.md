@@ -1,8 +1,8 @@
 ## unified CLI tools
 
-Single directory housing all portable CLI tools. One `bin/` for PATH, one `conf/` for config files, one `build.bat` to compile everything.
+Six portable command line tools in one folder. One `bin/` for PATH, one `conf/` for config files, one `build.bat` to compile everything.
 
-Each tool is fully independent - removing one .exe and its config file won't affect any other tool in the directory. The entire shared/ folder is portable: copy it anywhere, add its `bin/` to PATH, and all tools work.
+Each tool is fully independent. Removing one .exe and its config file leaves the rest working. Copy the folder anywhere, add its `bin/` to PATH, and every tool runs.
 
 ---
 
@@ -32,12 +32,6 @@ Each tool is fully independent - removing one .exe and its config file won't aff
 - **Dependencies:** none
 - **Description:** Renames files to sequential numbers, preserving extensions, with rollback support.
 
-#### [etsu](docs/etsu.md) (**e**xif**t**ool **s**imple **u**se)
-
-- **Source:** `src/etsu/etsu.cs, read.cs, clean.cs, date.cs, logconf.cs`
-- **Dependencies:** `System.Windows.Forms` (native file pickers) + external exiftool
-- **Description:** Reads all metadata from one file, strips EXIF/IPTC/XMP from several (rollback-safe), or sets EXIF dates and filesystem timestamps.
-
 #### [mmu](docs/mmu.md) (**m**ini **m**usic **u**til)
 
 - **Source:** `src/mmu/mmu.cs`, `download.cs`
@@ -58,9 +52,9 @@ Each tool is fully independent - removing one .exe and its config file won't aff
 iwr https://raw.githubusercontent.com/tinyscr/cli/main/install.ps1 | iex
 ```
 
-The installer lists the tools, asks which ones you want, compiles them on your machine and drops the executables into `bin/` next to where you ran it. Existing config files are never overwritten.
+The installer downloads the sources, compiles the tools you pick on your own machine, and drops everything into a `tinyscripts.CLI` folder next to where you ran it. Existing config files are never overwritten.
 
-Enter `0` to install everything, or the tool numbers one after another - `24` installs tools 2 and 4. See [docs/install.md](docs/install.md) for details.
+Enter `0` to install everything, or the tool numbers one after another. See [docs/install.md](docs/install.md) for the details.
 
 Run the same command again whenever a tool changes. Only the tools whose sources changed are recompiled.
 
@@ -75,7 +69,7 @@ Nothing else. No Visual Studio, no NuGet, no dotnet CLI, no runtime to install.
 #### PATH setup
 
 ```
-setx PATH "%PATH%;<folder>\bin"
+setx PATH "%PATH%;<folder>\tinyscripts.CLI\bin"
 ```
 
 One entry covers all tools. Restart your terminal after setting.
@@ -94,7 +88,7 @@ Uses Windows' built-in C# compiler (`csc.exe`). None of the tools need Visual St
 
 - .NET Framework 4.0+ (ships with Windows 8+; available for Windows 7).
 - `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe` - part of the .NET Framework SDK component of Windows.
-- `System.Windows.Forms.dll` - referenced only by `dirdiff.cs` and `etsu`, ships with .NET Framework.
+- `System.Windows.Forms.dll` - referenced only by `dirdiff`, ships with .NET Framework.
 
 #### Build output
 
@@ -107,10 +101,12 @@ Uses Windows' built-in C# compiler (`csc.exe`). None of the tools need Visual St
 3. If the tool needs a config file, add it to `conf/` and reference it from code as `../conf/<filename>`.
 4. Run `build.bat` - the .exe lands in `bin/` automatically.
 
-The installer picks up new tools on its own - it reads whatever is in `src/`, so no separate registration step is needed.
+The installer picks up new tools on its own. It reads whatever is in `src/`, so no separate registration step is needed.
 
 ---
 
 ### Compatibility
 
 All tools compile and run on 64-bit Windows (Windows 7+). On 32-bit Windows, change the `csc.exe` path in `build.bat` to the non-64 `C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe`.
+
+The installer needs PowerShell 5.1 and therefore Windows 10 or later. The tools themselves run on Windows 7 as well.
