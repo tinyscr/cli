@@ -52,10 +52,30 @@ Each tool is fully independent - removing one .exe and its config file won't aff
 
 ---
 
-### PATH setup
+### Installing
 
 ```
-setx PATH "%PATH%;D:\DevEnv\custom_utils\shared\bin"
+iwr https://raw.githubusercontent.com/tinyscr/cli/main/install.ps1 | iex
+```
+
+The installer lists the tools, asks which ones you want, compiles them on your machine and drops the executables into `bin/` next to where you ran it. Existing config files are never overwritten.
+
+Enter `0` to install everything, or the tool numbers one after another - `24` installs tools 2 and 4. See [docs/install.md](docs/install.md) for details.
+
+Run the same command again whenever a tool changes. Only the tools whose sources changed are recompiled.
+
+#### Requirements
+
+- Windows 10 or later.
+- PowerShell 5.1, which ships with Windows.
+- The C# compiler that ships with Windows, at `C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`.
+
+Nothing else. No Visual Studio, no NuGet, no dotnet CLI, no runtime to install.
+
+#### PATH setup
+
+```
+setx PATH "%PATH%;<folder>\bin"
 ```
 
 One entry covers all tools. Restart your terminal after setting.
@@ -86,6 +106,8 @@ Uses Windows' built-in C# compiler (`csc.exe`). None of the tools need Visual St
 2. Add a compile line to `build.bat` (same pattern as the existing tools).
 3. If the tool needs a config file, add it to `conf/` and reference it from code as `../conf/<filename>`.
 4. Run `build.bat` - the .exe lands in `bin/` automatically.
+
+The installer picks up new tools on its own - it reads whatever is in `src/`, so no separate registration step is needed.
 
 ---
 
