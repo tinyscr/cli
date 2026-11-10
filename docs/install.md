@@ -43,7 +43,9 @@ tinyscripts.CLI/
 └── .state/     per tool source hashes
 ```
 
-The installer prints the `setx PATH` line to add. Run it, then open a new terminal.
+The installer prints the commands to add the `bin` folder to your PATH. Run them, then open a new terminal.
+
+Those commands read the user PATH and write it back through .NET. Do not replace them with `setx PATH "%PATH%;..."`: `setx` writes to the user PATH while `%PATH%` expands to the merged user and system PATH, so every system entry gets copied into your user PATH and shadows the system one. `setx` also truncates the value to 1024 characters and warns when it does.
 
 ---
 

@@ -28,11 +28,22 @@ Nothing else. No Visual Studio, no NuGet, no dotnet CLI, no runtime to install.
 
 ### PATH setup
 
-```
-setx PATH "%PATH%;<folder>\tinyscripts.CLI\bin"
+Add the `bin` folder to your user PATH:
+
+```powershell
+$bin = "<folder>\tinyscripts.CLI\bin"
+$user = [Environment]::GetEnvironmentVariable('PATH', 'User')
+$entries = @($user -split ';' | Where-Object { $_ })
+if ($entries -notcontains $bin) {
+    [Environment]::SetEnvironmentVariable('PATH', (($entries + $bin) -join ';'), 'User')
+}
 ```
 
 One entry covers all tools. Restart your terminal after setting.
+
+Do not use `setx PATH "%PATH%;..."`. `setx` writes to the user PATH, but `%PATH%` expands to the merged user and system PATH, so every system entry gets copied into your user PATH and shadows the system one. `setx` also truncates the value to 1024 characters and warns when it does.
+
+The snippet above reads only the user PATH, so nothing from the system PATH is duplicated, and it writes through .NET rather than `setx`, so there is no length limit. It also checks whether the entry is already there, so running it twice does not add it twice.
 
 ---
 

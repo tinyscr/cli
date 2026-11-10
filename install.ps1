@@ -293,7 +293,13 @@ function Invoke-Install {
         Write-Step ('Installed {0}, up to date {1}, failed {2}.' -f $built, $skipped, $failed)
         Write-Step ('Executables: {0}' -f $BinDir)
         Write-Step ''
-        Write-Host ('Add it to your PATH: setx PATH "%PATH%;{0}"' -f $BinDir)
+        Write-Step 'Add it to your PATH:'
+        Write-Host ('  $bin = "{0}"' -f $BinDir)
+        Write-Host "  `$user = [Environment]::GetEnvironmentVariable('PATH', 'User')"
+        Write-Host '  $entries = @($user -split '';'' | Where-Object { $_ })'
+        Write-Host '  if ($entries -notcontains $bin) {'
+        Write-Host '      [Environment]::SetEnvironmentVariable(''PATH'', (($entries + $bin) -join '';''), ''User'')'
+        Write-Host '  }'
         Write-Step ''
         Write-Info 'Open a new terminal afterwards so the change takes effect.'
 
