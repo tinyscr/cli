@@ -1,6 +1,6 @@
 ## unified CLI tools
 
-Six portable command line tools in one folder. One `bin/` for PATH, one `conf/` for config files, one `build.bat` to compile everything.
+Portable command line tools in one folder. One `bin/` for PATH, one `conf/` for config files, one `build.bat` to compile everything.
 
 Each tool is fully independent. Removing one .exe and its config file leaves the rest working. Copy the folder anywhere, add its `bin/` to PATH, and every tool runs.
 

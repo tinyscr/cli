@@ -12,7 +12,7 @@
 iwr https://raw.githubusercontent.com/tinyscr/cli/main/install.ps1 | iex
 ```
 
-The installer downloads the sources from the repository, lists the tools it found, and asks which ones to build.
+The installer downloads the sources from the repository, lists the tools it found, and asks which ones to build. The list below is an example run:
 
 ```
 Available tools:
